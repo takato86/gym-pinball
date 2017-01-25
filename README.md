@@ -4,11 +4,11 @@ port of rlpy pinball environment to gym
 
 ## Installation
 
->pip install git+https://https://github.com/pvrancx/gym-pinball.git
+>pip install git+https://github.com/pvrancx/gym-pinball.git
 
 or:
 
->git clone https://https://github.com/pvrancx/gym-pinball.git
+>git clone https://github.com/pvrancx/gym-pinball.git
 
 
 >cd gym-pinball
