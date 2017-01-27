@@ -181,7 +181,7 @@ class PinBallEnv(gym.core.Env):
             for obs in self.environment.obstacles:
                 points = map(lambda p: (p[0]*screen_width,p[1]*screen_height),
                              obs.points)
-                obj = rendering.FilledPolygon(points)
+                obj = rendering.make_polyline(points+[points[0]])
                 self.viewer.add_geom(obj)
             #add target
             target_rad = self.environment.target_rad * screen_height
