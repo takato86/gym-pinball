@@ -133,7 +133,7 @@ class PinBallEnv(gym.core.Env):
         """
         self.NOISE = noise
         self.configuration = CFGS[configuration]
-        self.screen = None
+        self.viewer = None
         self.episodeCap = episodeCap
         self.actions_num = 5
         self.actions = [
@@ -158,12 +158,47 @@ class PinBallEnv(gym.core.Env):
             self.configuration,
             random_state=self.random_state)
 
+        self.reset()
+
+
     def _seed(self, seed=None):
         self.random_state, seed = seeding.np_random(seed)
         return [seed]
 
     def _render(self, mode='human', close=False):
-        pass
+        if close:
+            if self.viewer is not None:
+                self.viewer.close()
+                self.viewer = None
+            return
+
+        screen_width = 600
+        screen_height = 400
+        if self.viewer is None:
+            from gym.envs.classic_control import rendering
+            self.viewer = rendering.Viewer(screen_width, screen_height)
+            for obs in self.environment.obstacles:
+                points = map(lambda p: (p[0]*screen_width,p[1]*screen_height),
+                             obs.points)
+                obj = rendering.FilledPolygon(points)
+                self.viewer.add_geom(obj)
+            target = rendering.make_circle(10)
+            target.set_color(0,0,1)
+            self.targettrans = rendering.Transform()
+            self.targettrans.set_translation(
+                self.environment.target_pos[0]*screen_width,
+                self.environment.target_pos[1]*screen_height)
+            self.viewer.add_geom(target)
+            ball = rendering.make_circle(5)
+            ball.set_color(1,0,0)
+            self.balltrans = rendering.Transform()
+            ball.add_attr(self.balltrans)
+            self.viewer.add_geom(ball)
+
+        self.balltrans.set_translation(
+            self.state[0]*screen_width,
+            self.state[1]*screen_height)
+        return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
     def _get_ob(self):
         s = self.state
