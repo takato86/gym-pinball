@@ -172,29 +172,35 @@ class PinBallEnv(gym.core.Env):
                 self.viewer = None
             return
 
-        screen_width = 600
+        screen_width = 400
         screen_height = 400
         if self.viewer is None:
             from gym.envs.classic_control import rendering
             self.viewer = rendering.Viewer(screen_width, screen_height)
+            #add obstacles
             for obs in self.environment.obstacles:
                 points = map(lambda p: (p[0]*screen_width,p[1]*screen_height),
                              obs.points)
                 obj = rendering.FilledPolygon(points)
                 self.viewer.add_geom(obj)
-            target = rendering.make_circle(10)
+            #add target
+            target_rad = self.environment.target_rad * screen_height
+            target = rendering.make_circle(target_rad)
             target.set_color(0,0,1)
             self.targettrans = rendering.Transform()
+            target.add_attr(self.targettrans)
             self.targettrans.set_translation(
                 self.environment.target_pos[0]*screen_width,
                 self.environment.target_pos[1]*screen_height)
             self.viewer.add_geom(target)
-            ball = rendering.make_circle(5)
+            #add ball
+            ball_rad = self.environment.ball.radius * screen_height
+            ball = rendering.make_circle(ball_rad)
             ball.set_color(1,0,0)
             self.balltrans = rendering.Transform()
             ball.add_attr(self.balltrans)
             self.viewer.add_geom(ball)
-
+        #update ball location
         self.balltrans.set_translation(
             self.state[0]*screen_width,
             self.state[1]*screen_height)
@@ -561,8 +567,8 @@ class PinballModel(object):
                     ncollision += 1
 
             if ncollision == 1:
-                self.ball.xdot = dxdy[0]
-                self.ball.ydot = dxdy[1]
+                self.ball.xdot = self.ball._clip(dxdy[0])
+                self.ball.ydot = self.ball._clip(dxdy[1])
                 if i == 19:
                     self.ball.step()
             elif ncollision > 1:
