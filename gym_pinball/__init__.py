@@ -6,6 +6,12 @@ register(
     nondeterministic = True,
 )
 
+register(
+    id='InfinitePinBall-v0',
+    entry_point='gym_pinball.envs:PinBallEnv',
+    kwargs={'infinite':1},
+    nondeterministic = True,
+)
 
 register(
     id='PinBall-Box-v0',

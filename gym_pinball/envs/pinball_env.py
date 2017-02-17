@@ -5,6 +5,7 @@ from itertools import tee, izip
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
+import util
 
 __copyright__ = "Copyright 2013, RLPy http://acl.mit.edu/RLPy"
 __credits__ = ["Alborz Geramifard", "Robert H. Klein", "Christoph Dann",
@@ -122,7 +123,7 @@ class PinBallEnv(gym.core.Env):
     #: default location of config files shipped with rlpy
 
     def __init__(self, noise=.1, episodeCap=1000,
-                 configuration=2):
+                 configuration=2, infinite=False):
         """
         configuration:
             location of the configuration file
@@ -130,8 +131,12 @@ class PinBallEnv(gym.core.Env):
             maximum length of an episode
         noise:
             with probability noise, a uniformly random action is executed
+        infinite (bool):
+            use non-terminating variation that resets ball to random loc when
+            goal reached
         """
         self.NOISE = noise
+        self.infinite = infinite
         self.configuration = CFGS[configuration]
         self.viewer = None
         self.episodeCap = episodeCap
@@ -210,6 +215,24 @@ class PinBallEnv(gym.core.Env):
         s = self.state
         return np.array(s)
 
+    def _random_point(self,rect):
+        '''select random valid point within rectangular region'''
+        x1,y1,x2,y2 = rect
+        p = np.array((x1,y1))+np.random.rand(2)*(x2-x1,y2-y1)
+        while not self._is_valid(p):
+            # will run forever if no valid points can be found
+            p = np.array((x1,y1))+np.random.rand(2)*(x2-x1,y2-y1)
+        return p
+
+    def _is_valid(self, p):
+        ''' check that point doesn't interesct with pinball obstacles'''
+        if not util.in_rect(p,(0.,0.,1.,1.)):
+            return False
+        for obs in self.environment.obstacles:
+            if util.intersects(p, obs):
+                return False
+        return True
+
     def _step(self, a):
         s = self.state
         [self.environment.ball.position[0],
@@ -221,6 +244,14 @@ class PinBallEnv(gym.core.Env):
             a = self.random_state.choice(self.get_act())
         reward = self.environment.take_action(a)
         self.environment._check_bounds()
+        if self.infinite and self._terminal():
+            #get random valid position
+            pos = self._random_point((0.,0.,1.,1.))
+            #reset environment to pos, velocity 0
+            self.environment.ball.position[0] = pos[0]
+            self.environment.ball.position[1] = pos[1]
+            self.environment.ball.xdot = 0.0
+            self.environment.ball.ydot = 0.0
         state = np.array(self.environment.get_state())
         self.state = state.copy()
         return self._get_ob(), reward, self._terminal(), {}
@@ -522,7 +553,6 @@ class PinballModel(object):
                 self.target_pos = [float(tokens[1]), float(tokens[2])]
                 self.target_rad = float(tokens[3])
             elif tokens[0] == 'start':
-                print 'start'
                 start_pos = zip(*[iter(map(float, tokens[1:]))] * 2)
             elif tokens[0] == 'ball':
                 ball_rad = float(tokens[1])
