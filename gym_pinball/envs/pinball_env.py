@@ -245,13 +245,14 @@ class PinBallEnv(gym.core.Env):
         reward = self.environment.take_action(a)
         self.environment._check_bounds()
         if self.infinite and self._terminal():
-            #get random valid position
-            pos = self._random_point((0.,0.,1.,1.))
-            #reset environment to pos, velocity 0
-            self.environment.ball.position[0] = pos[0]
-            self.environment.ball.position[1] = pos[1]
-            self.environment.ball.xdot = 0.0
-            self.environment.ball.ydot = 0.0
+            while self._terminal(): # make sure we don't reset to terminal state
+                #get random valid position
+                pos = self._random_point((0.,0.,1.,1.))
+                #reset environment to pos, velocity 0
+                self.environment.ball.position[0] = pos[0]
+                self.environment.ball.position[1] = pos[1]
+                self.environment.ball.xdot = 0.0
+                self.environment.ball.ydot = 0.0
         state = np.array(self.environment.get_state())
         self.state = state.copy()
         return self._get_ob(), reward, self._terminal(), {}
