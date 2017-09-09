@@ -1,11 +1,11 @@
-import cStringIO as StringIO
+from io import StringIO as StringIO
 import numpy as np
-from itertools import tee, izip
+from itertools import tee
 
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-import util
+from . import util
 
 __copyright__ = "Copyright 2013, RLPy http://acl.mit.edu/RLPy"
 __credits__ = ["Alborz Geramifard", "Robert H. Klein", "Christoph Dann",
@@ -370,7 +370,7 @@ class PinballObstacle(object):
         a, b = tee(np.vstack([np.array(self.points), self.points[0]]))
         next(b, None)
         intercept_found = False
-        for pt_pair in izip(a, b):
+        for pt_pair in zip(a, b):
             if self._intercept_edge(pt_pair, ball):
                 if intercept_found:
                     # Ball has hit a corner
@@ -542,19 +542,21 @@ class PinballModel(object):
 
         ball_rad = 0.01
         start_pos = []
-        fp=StringIO.StringIO(configuration)
+        fp=StringIO(configuration)
         for line in fp.readlines():
             tokens = line.strip().split()
             if not len(tokens):
                 continue
             elif tokens[0] == 'polygon':
+                obst = [i for i in zip(*[iter(map(float, tokens[1:]))] * 2)]
                 self.obstacles.append(
-                    PinballObstacle(zip(*[iter(map(float, tokens[1:]))] * 2)))
+                    PinballObstacle(obst))
             elif tokens[0] == 'target':
                 self.target_pos = [float(tokens[1]), float(tokens[2])]
                 self.target_rad = float(tokens[3])
             elif tokens[0] == 'start':
-                start_pos = zip(*[iter(map(float, tokens[1:]))] * 2)
+                pts = [p for p in zip(*[iter(map(float, tokens[1:]))] * 2)]
+                start_pos = pts
             elif tokens[0] == 'ball':
                 ball_rad = float(tokens[1])
         self.start_pos = start_pos[0]
@@ -582,7 +584,7 @@ class PinballModel(object):
         :type action: int
 
         """
-        for i in xrange(20):
+        for i in range(20):
             if i == 0:
                 self.ball.add_impulse(*self.action_effects[action])
 

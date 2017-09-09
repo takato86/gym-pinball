@@ -9,7 +9,7 @@ def in_rect(p,rect):
 
 def intersects(point,obj):
     '''check if point is within (bounding box of) object '''
-    bb = (obj.min_x-.05,obj.min_y-.05,obj.max_x+.05,obj.max_y+.05)# bounding box
+    bb = (obj.min_x-.01,obj.min_y-.01,obj.max_x+.01,obj.max_y+.01)# bounding box
     return in_rect(point, bb)
 
 
