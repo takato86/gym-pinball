@@ -15,7 +15,7 @@ __author__ = ["Pierre-Luc Bacon",  # author of the original version
               "Austin Hays",# adapted for RLPy and TKinter
               "Peter Vrancx"] #adapted for OpenAI gym
 
-BOX_CFG="""ball 0.02
+BOX_CFG=u"""ball 0.02
 target 0.9 0.2 0.04
 start 0.2 0.9
 
@@ -26,7 +26,7 @@ polygon 1.0 1.0 0.99 1.0 0.99 0.0 1.0 0.0
 
 polygon 0.45 0.45 0.55 0.45 0.55 0.55 0.45 0.55"""
 
-EMPTY_CFG="""ball 0.02
+EMPTY_CFG=u"""ball 0.02
 target 0.9 0.2 0.04
 start 0.2 0.9
 
@@ -35,7 +35,7 @@ polygon 0.0 0.0 0.01 0.0 0.01 1.0 0.0 1.0
 polygon 0.0 1.0 0.0 0.99 1.0 0.99 1.0 1.0
 polygon 1.0 1.0 0.99 1.0 0.99 0.0 1.0 0.0"""
 
-HARD_CFG="""ball 0.015
+HARD_CFG=u"""ball 0.015
 target 0.5 0.06 0.04
 start 0.055 0.95
 
@@ -59,7 +59,7 @@ polygon 0.33399999999999996 0.014 0.27799999999999997 0.03799999999999998 0.368 
 polygon 0.294 0.584 0.478 0.626 0.482 0.574 0.324 0.434 0.35 0.39 0.572 0.52 0.588 0.722 0.456 0.668
 """
 
-MEDIUM_CFG="""ball 0.02
+MEDIUM_CFG=u"""ball 0.02
 target 0.9 0.2 0.04
 start 0.2 0.9
 
@@ -75,9 +75,9 @@ polygon 0.45 0.39199999999999996 0.614 0.25799999999999995 0.7340000000000001 0.
 polygon 0.33399999999999996 0.014 0.27799999999999997 0.03799999999999998 0.368 0.254 0.7 0.20000000000000004 0.764 0.108 0.526 0.158
 polygon 0.294 0.584 0.478 0.626 0.482 0.574 0.324 0.434 0.35 0.39 0.572 0.52 0.588 0.722 0.456 0.668 """
 
-SIMPLE_CFG="""ball 0.02
+SIMPLE_CFG=u"""ball 0.02
 target 0.9 0.2 0.04
-start 0.2 0.9
+start 0.093 0.611
 
 polygon 0.0 0.0 0.0 0.01 1.0 0.01 1.0 0.0
 polygon 0.0 0.0 0.01 0.0 0.01 1.0 0.0 1.0
@@ -93,8 +93,9 @@ polygon 0.75 0.025 0.8 0.24 0.725 0.27 0.7 0.025"""
 
 CFGS = [EMPTY_CFG, BOX_CFG, SIMPLE_CFG, MEDIUM_CFG, HARD_CFG]
 
+
 class PinBallEnv(gym.core.Env):
-    metadata = {'render.modes': ['human']}
+    metadata = {'render.modes': ['human','rgb_array']}
 
     """
     The goal of this domain is to maneuver a small ball on a plate into a hole.
@@ -123,7 +124,7 @@ class PinBallEnv(gym.core.Env):
     #: default location of config files shipped with rlpy
 
     def __init__(self, noise=.1, episodeCap=1000,
-                 configuration=2, infinite=False):
+                 configuration=2, scale=1., infinite=False):
         """
         configuration:
             location of the configuration file
@@ -148,23 +149,21 @@ class PinBallEnv(gym.core.Env):
             PinballModel.ACC_Y,
             PinballModel.ACC_NONE]
         self.statespace_limits = np.array(
-            [[0.0, 1.0], [0.0, 1.0], [-2.0, 2.0], [-2.0, 2.0]])
+            [[0.0, 1.0 * scale], [0.0, 1.0 * scale], [-2.0, 2.0], [-2.0, 2.0]])
         self.continuous_dims = [4]
         #super(Pinball, self).__init__()
 
-
-        self.observation_space = spaces.Box(self.statespace_limits[:,0],
-                                            self.statespace_limits[:,1])
+        self.observation_space = spaces.Box(self.statespace_limits[:, 0],
+                                            self.statespace_limits[:, 1])
         self.action_space = spaces.Discrete(5)
 
         self._seed()
 
         self.environment = PinballModel(
             self.configuration,
-            random_state=self.random_state)
+            random_state=self.random_state, scale=scale)
 
         self.reset()
-
 
     def _seed(self, seed=None):
         self.random_state, seed = seeding.np_random(seed)
@@ -176,39 +175,42 @@ class PinBallEnv(gym.core.Env):
                 self.viewer.close()
                 self.viewer = None
             return
-
-        screen_width = 400
-        screen_height = 400
+        scale = self.environment.scale
+        screen_width = 500
+        screen_height = 500
+        width = float(screen_width) / scale
+        height = float(screen_height) / scale
         if self.viewer is None:
             from gym.envs.classic_control import rendering
             self.viewer = rendering.Viewer(screen_width, screen_height)
             #add obstacles
             for obs in self.environment.obstacles:
-                points = map(lambda p: (p[0]*screen_width,p[1]*screen_height),
-                             obs.points)
+                points = list(map(lambda p: (p[0]*width, p[1]*height),
+                             obs.points))
                 obj = rendering.make_polyline(points+[points[0]])
                 self.viewer.add_geom(obj)
+
             #add target
-            target_rad = self.environment.target_rad * screen_height
+            target_rad = self.environment.target_rad * height
             target = rendering.make_circle(target_rad)
-            target.set_color(0,0,1)
+            target.set_color(0, 0, 1)
             self.targettrans = rendering.Transform()
             target.add_attr(self.targettrans)
             self.targettrans.set_translation(
-                self.environment.target_pos[0]*screen_width,
-                self.environment.target_pos[1]*screen_height)
+                self.environment.target_pos[0]*width,
+                self.environment.target_pos[1]*height)
             self.viewer.add_geom(target)
             #add ball
-            ball_rad = self.environment.ball.radius * screen_height
+            ball_rad = self.environment.ball.radius * height
             ball = rendering.make_circle(ball_rad)
-            ball.set_color(1,0,0)
+            ball.set_color(1, 0, 0)
             self.balltrans = rendering.Transform()
             ball.add_attr(self.balltrans)
             self.viewer.add_geom(ball)
         #update ball location
         self.balltrans.set_translation(
-            self.state[0]*screen_width,
-            self.state[1]*screen_height)
+            self.state[0]*width,
+            self.state[1]*height)
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
     def _get_ob(self):
@@ -522,7 +524,7 @@ class PinballModel(object):
     THRUST_PENALTY = -5
     END_EPISODE = 10000
 
-    def __init__(self, configuration, random_state=np.random.RandomState()):
+    def __init__(self, configuration, random_state=np.random.RandomState(), scale=1.):
         """ Read a configuration file for Pinball and draw the domain to screen
 
     :param configuration: a configuration file containing the polygons,
@@ -530,7 +532,8 @@ class PinballModel(object):
     :type configuration: str
 
         """
-
+        self.scale = scale
+        self.bounds = np.array([[0., 1.], [0., 1.]]) * scale
         self.random_state = random_state
         self.action_effects = {self.ACC_X: (1, 0), self.ACC_Y: (
             0, 1), self.DEC_X: (-1, 0), self.DEC_Y: (0, -1), self.ACC_NONE: (0, 0)}
@@ -542,20 +545,21 @@ class PinballModel(object):
 
         ball_rad = 0.01
         start_pos = []
-        fp=StringIO(configuration)
+        fp = StringIO(configuration)
         for line in fp.readlines():
             tokens = line.strip().split()
             if not len(tokens):
                 continue
             elif tokens[0] == 'polygon':
-                obst = [i for i in zip(*[iter(map(float, tokens[1:]))] * 2)]
+                obst = [i for i in zip(*[iter(map(lambda x: scale*x, map(float, tokens[1:]))
+                                              )] * 2)]
                 self.obstacles.append(
                     PinballObstacle(obst))
             elif tokens[0] == 'target':
-                self.target_pos = [float(tokens[1]), float(tokens[2])]
+                self.target_pos = [float(tokens[1])*scale, float(tokens[2])*scale]
                 self.target_rad = float(tokens[3])
             elif tokens[0] == 'start':
-                pts = [p for p in zip(*[iter(map(float, tokens[1:]))] * 2)]
+                pts = [p for p in zip(*[iter(map( lambda x: scale*x , map(float, tokens[1:])))] * 2)]
                 start_pos = pts
             elif tokens[0] == 'ball':
                 ball_rad = float(tokens[1])
@@ -633,11 +637,11 @@ class PinballModel(object):
 
     def _check_bounds(self):
         """ Make sure that the ball stays within the environment """
-        if self.ball.position[0] > 1.0:
-            self.ball.position[0] = 0.95
-        if self.ball.position[0] < 0.0:
-            self.ball.position[0] = 0.05
-        if self.ball.position[1] > 1.0:
-            self.ball.position[1] = 0.95
-        if self.ball.position[1] < 0.0:
-            self.ball.position[1] = 0.05
+        if self.ball.position[0] > self.bounds[0, 1]:
+            self.ball.position[0] = self.bounds[0, 1] - 0.05
+        if self.ball.position[0] < self.bounds[0, 0]:
+            self.ball.position[0] = self.bounds[0, 0] + 0.05
+        if self.ball.position[1] > self.bounds[1, 1]:
+            self.ball.position[1] = self.bounds[1, 1] - 0.05
+        if self.ball.position[1] < self.bounds[1, 0]:
+            self.ball.position[1] = self.bounds[1, 0] + 0.05
