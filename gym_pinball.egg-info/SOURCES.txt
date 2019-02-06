@@ -1,6 +1,0 @@
-README.md
-gym_pinball.egg-info/PKG-INFO
-gym_pinball.egg-info/SOURCES.txt
-gym_pinball.egg-info/dependency_links.txt
-gym_pinball.egg-info/requires.txt
-gym_pinball.egg-info/top_level.txt
