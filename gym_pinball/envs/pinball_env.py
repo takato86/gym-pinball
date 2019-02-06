@@ -1,11 +1,11 @@
-import cStringIO as StringIO
+import io as StringIO
 import numpy as np
-from itertools import tee, izip
+from itertools import tee
 
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-import util
+from . import util
 
 __copyright__ = "Copyright 2013, RLPy http://acl.mit.edu/RLPy"
 __credits__ = ["Alborz Geramifard", "Robert H. Klein", "Christoph Dann",
@@ -170,7 +170,7 @@ class PinBallEnv(gym.core.Env):
         self.random_state, seed = seeding.np_random(seed)
         return [seed]
 
-    def _render(self, mode='human', close=False):
+    def render(self, mode='human', close=False):
         if close:
             if self.viewer is not None:
                 self.viewer.close()
@@ -215,7 +215,7 @@ class PinBallEnv(gym.core.Env):
         s = self.state
         return np.array(s)
 
-    def _random_point(self,rect):
+    def random_point(self,rect):
         '''select random valid point within rectangular region'''
         x1,y1,x2,y2 = rect
         p = np.array((x1,y1))+np.random.rand(2)*(x2-x1,y2-y1)
@@ -233,7 +233,7 @@ class PinBallEnv(gym.core.Env):
                 return False
         return True
 
-    def _step(self, a):
+    def step(self, a):
         s = self.state
         [self.environment.ball.position[0],
          self.environment.ball.position[1],
@@ -257,7 +257,7 @@ class PinBallEnv(gym.core.Env):
         self.state = state.copy()
         return self._get_ob(), reward, self._terminal(), {}
 
-    def _reset(self):
+    def reset(self):
         self.environment.ball.position[0], self.environment.ball.position[
             1] = self.environment.start_pos
         self.environment.ball.xdot, self.environment.ball.ydot = 0.0, 0.0
@@ -271,7 +271,7 @@ class PinBallEnv(gym.core.Env):
     def get_act(self, s=0):
         return np.array(self.actions)
 
-    def _terminal(self):
+    def terminal(self):
         return self.environment.episode_ended()
 
 
@@ -341,7 +341,7 @@ class PinballObstacle(object):
         :param points: A list of points defining the polygon
         :type points: list of lists
         """
-        self.points = points
+        self.points = [(x,y) for x,y in points]
         self.min_x = min(self.points, key=lambda pt: pt[0])[0]
         self.max_x = max(self.points, key=lambda pt: pt[0])[0]
         self.min_y = min(self.points, key=lambda pt: pt[1])[1]
@@ -370,7 +370,7 @@ class PinballObstacle(object):
         a, b = tee(np.vstack([np.array(self.points), self.points[0]]))
         next(b, None)
         intercept_found = False
-        for pt_pair in izip(a, b):
+        for pt_pair in zip(a, b):
             if self._intercept_edge(pt_pair, ball):
                 if intercept_found:
                     # Ball has hit a corner
@@ -557,6 +557,7 @@ class PinballModel(object):
                 start_pos = zip(*[iter(map(float, tokens[1:]))] * 2)
             elif tokens[0] == 'ball':
                 ball_rad = float(tokens[1])
+        start_pos = [(x,y) for x,y in start_pos]
         self.start_pos = start_pos[0]
         a = self.random_state.randint(len(start_pos))
         self.ball = BallModel(list(start_pos[a]), ball_rad)
