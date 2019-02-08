@@ -184,8 +184,8 @@ class PinBallEnv(gym.core.Env):
             self.viewer = rendering.Viewer(screen_width, screen_height)
             #add obstacles
             for obs in self.environment.obstacles:
-                points = map(lambda p: (p[0]*screen_width,p[1]*screen_height),
-                             obs.points)
+                points = list(map(lambda p: (p[0]*screen_width,p[1]*screen_height),
+                             obs.points))
                 obj = rendering.make_polyline(points+[points[0]])
                 self.viewer.add_geom(obj)
             #add target
@@ -271,7 +271,7 @@ class PinBallEnv(gym.core.Env):
     def get_act(self, s=0):
         return np.array(self.actions)
 
-    def terminal(self):
+    def _terminal(self):
         return self.environment.episode_ended()
 
 
@@ -583,7 +583,7 @@ class PinballModel(object):
         :type action: int
 
         """
-        for i in xrange(20):
+        for i in range(20):
             if i == 0:
                 self.ball.add_impulse(*self.action_effects[action])
 
