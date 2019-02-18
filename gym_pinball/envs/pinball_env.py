@@ -122,7 +122,7 @@ class PinBallEnv(gym.core.Env):
     """
     #: default location of config files shipped with rlpy
 
-    def __init__(self, noise=.1, episodeCap=1000,
+    def __init__(self, noise=.1, episodeCap=10000,
                  configuration=2, infinite=False):
         """
         configuration:
@@ -140,6 +140,7 @@ class PinBallEnv(gym.core.Env):
         self.configuration = CFGS[configuration]
         self.viewer = None
         self.episodeCap = episodeCap
+        self.counter = 0
         self.actions_num = 5
         self.actions = [
             PinballModel.ACC_X,
@@ -234,6 +235,7 @@ class PinBallEnv(gym.core.Env):
         return True
 
     def step(self, a):
+        self.counter += 1
         s = self.state
         [self.environment.ball.position[0],
          self.environment.ball.position[1],
@@ -272,7 +274,10 @@ class PinBallEnv(gym.core.Env):
         return np.array(self.actions)
 
     def _terminal(self):
-        return self.environment.episode_ended()
+        if self.counter >= self.episodeCap or self.environment.episode_ended():
+            self.counter = 0
+            return True
+        return False
 
 
 class BallModel(object):
