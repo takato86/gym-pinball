@@ -147,7 +147,8 @@ class PinBallEnv(gym.core.Env):
             PinballModel.DEC_Y,
             PinballModel.DEC_X,
             PinballModel.ACC_Y,
-            PinballModel.ACC_NONE]
+            PinballModel.ACC_NONE
+            ]
         self.statespace_limits = np.array(
             [[0.0, 1.0], [0.0, 1.0], [-2.0, 2.0], [-2.0, 2.0]])
         self.continuous_dims = [4]
@@ -518,9 +519,9 @@ class PinballModel(object):
 
     """
     ACC_X = 0
-    ACC_Y = 1
+    DEC_Y = 1
     DEC_X = 2
-    DEC_Y = 3
+    ACC_Y = 3
     ACC_NONE = 4
 
     STEP_PENALTY = -1
