@@ -5,6 +5,7 @@ from itertools import tee
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
+from gym.envs.classic_control import rendering
 from . import util
 
 __copyright__ = "Copyright 2013, RLPy http://acl.mit.edu/RLPy"
@@ -153,7 +154,8 @@ class PinBallEnv(gym.core.Env):
             [[0.0, 1.0], [0.0, 1.0], [-2.0, 2.0], [-2.0, 2.0]])
         self.continuous_dims = [4]
         #super(Pinball, self).__init__()
-
+        self.screen_height = 400
+        self.screen_width = 400
 
         self.observation_space = spaces.Box(self.statespace_limits[:,0],
                                             self.statespace_limits[:,1])
@@ -178,40 +180,39 @@ class PinBallEnv(gym.core.Env):
                 self.viewer.close()
                 self.viewer = None
             return
-
-        screen_width = 400
-        screen_height = 400
         if self.viewer is None:
-            from gym.envs.classic_control import rendering
-            self.viewer = rendering.Viewer(screen_width, screen_height)
-            #add obstacles
-            for obs in self.environment.obstacles:
-                points = list(map(lambda p: (p[0]*screen_width,p[1]*screen_height),
-                             obs.points))
-                obj = rendering.make_polyline(points+[points[0]])
-                self.viewer.add_geom(obj)
-            #add target
-            target_rad = self.environment.target_rad * screen_height
-            target = rendering.make_circle(target_rad)
-            target.set_color(0,0,1)
-            self.targettrans = rendering.Transform()
-            target.add_attr(self.targettrans)
-            self.targettrans.set_translation(
-                self.environment.target_pos[0]*screen_width,
-                self.environment.target_pos[1]*screen_height)
-            self.viewer.add_geom(target)
-            #add ball
-            ball_rad = self.environment.ball.radius * screen_height
-            ball = rendering.make_circle(ball_rad)
-            ball.set_color(1,0,0)
-            self.balltrans = rendering.Transform()
-            ball.add_attr(self.balltrans)
-            self.viewer.add_geom(ball)
+            self.init_render()
         #update ball location
         self.balltrans.set_translation(
-            self.state[0]*screen_width,
-            self.state[1]*screen_height)
+            self.state[0]*self.screen_width,
+            self.state[1]*self.screen_height)
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
+    
+    def init_render(self):
+        self.viewer = rendering.Viewer(self.screen_width, self.screen_height)
+        #add obstacles
+        for obs in self.environment.obstacles:
+            points = list(map(lambda p: (p[0]*self.screen_width,p[1]*self.screen_height),
+                            obs.points))
+            obj = rendering.make_polyline(points+[points[0]])
+            self.viewer.add_geom(obj)
+        #add target
+        target_rad = self.environment.target_rad * self.screen_height
+        target = rendering.make_circle(target_rad)
+        target.set_color(0,0,1)
+        self.targettrans = rendering.Transform()
+        target.add_attr(self.targettrans)
+        self.targettrans.set_translation(
+            self.environment.target_pos[0]*self.screen_width,
+            self.environment.target_pos[1]*self.screen_height)
+        self.viewer.add_geom(target)
+        #add ball
+        ball_rad = self.environment.ball.radius * self.screen_height
+        ball = rendering.make_circle(ball_rad)
+        ball.set_color(1,0,0)
+        self.balltrans = rendering.Transform()
+        ball.add_attr(self.balltrans)
+        self.viewer.add_geom(ball)
 
     def _get_ob(self):
         s = self.state
@@ -279,6 +280,26 @@ class PinBallEnv(gym.core.Env):
             self.counter = 0
             return True
         return False
+
+
+class PinballSubgoalEnv(PinBallEnv):
+    def __init__(self, noise=.1, episodeCap=10000,
+                 configuration=2, infinite=False, subg_confs=[]):
+        super().__init__(noise, episodeCap, configuration, infinite)
+        self.subg_confs = subg_confs # [{pos_x: , pos_y: , rad: }]
+    
+    def init_render(self):
+        super().init_render()
+        for subg_conf in self.subg_confs:
+            subg_rad = subg_conf["rad"] * self.screen_height
+            subg = rendering.make_circle(subg_rad)
+            subg.set_color(0,1,0)
+            subgtrans = rendering.Transform()
+            subg.add_attr(subgtrans)
+            subgtrans.set_translation(
+                subg_conf["pos_x"] * self.screen_width,
+                subg_conf["pos_y"] *self.screen_height)
+            self.viewer.add_geom(subg)
 
 
 class BallModel(object):

@@ -42,3 +42,9 @@ register(
     kwargs={'configuration':3},
     nondeterministic = True,
 )
+
+register(
+    id='Pinball-Subgoal-v0',
+    entry_point='gym_pinball.envs:PinballSubgoalEnv',
+    nondeterministic=True,
+)

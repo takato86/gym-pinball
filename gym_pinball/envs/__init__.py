@@ -1,1 +1,1 @@
-from gym_pinball.envs.pinball_env import PinBallEnv
+from gym_pinball.envs.pinball_env import PinBallEnv, PinballSubgoalEnv
