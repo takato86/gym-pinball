@@ -157,8 +157,8 @@ class PinBallEnv(gym.core.Env):
         self.screen_height = 400
         self.screen_width = 400
 
-        self.observation_space = spaces.Box(self.statespace_limits[:,0],
-                                            self.statespace_limits[:,1])
+        self.observation_space = spaces.Box(np.float32(self.statespace_limits[:,0]),
+                                            np.float32(self.statespace_limits[:,1]))
         self.action_space = spaces.Discrete(5)
 
         self._seed()
@@ -287,18 +287,18 @@ class PinballSubgoalEnv(PinBallEnv):
                  configuration=2, infinite=False, subg_confs=[]):
         super().__init__(noise, episodeCap, configuration, infinite)
         self.subg_confs = subg_confs # [{pos_x: , pos_y: , rad: }]
-    
+
     def init_render(self):
         super().init_render()
         for subg_conf in self.subg_confs:
             subg_rad = subg_conf["rad"] * self.screen_height
             subg = rendering.make_circle(subg_rad)
-            subg.set_color(0,1,0)
+            subg.set_color(0, 1, 0)
             subgtrans = rendering.Transform()
             subg.add_attr(subgtrans)
             subgtrans.set_translation(
                 subg_conf["pos_x"] * self.screen_width,
-                subg_conf["pos_y"] *self.screen_height)
+                subg_conf["pos_y"] * self.screen_height)
             self.viewer.add_geom(subg)
 
 
