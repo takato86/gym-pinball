@@ -161,7 +161,7 @@ class PinBallEnv(gym.core.Env):
                                             np.float32(self.statespace_limits[:,1]))
         self.action_space = spaces.Discrete(5)
 
-        self._seed()
+        self.seed()
 
         self.environment = PinballModel(
             self.configuration,
@@ -170,7 +170,7 @@ class PinBallEnv(gym.core.Env):
         self.reset()
 
 
-    def _seed(self, seed=None):
+    def seed(self, seed=None):
         self.random_state, seed = seeding.np_random(seed)
         return [seed]
 
