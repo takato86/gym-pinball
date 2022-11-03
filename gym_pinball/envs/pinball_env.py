@@ -167,9 +167,6 @@ class PinBallEnv(gym.core.Env):
             self.configuration,
             random_state=self.random_state)
 
-        self.reset()
-
-
     def seed(self, seed=None):
         self.random_state, seed = seeding.np_random(seed)
         return [seed]
@@ -199,7 +196,7 @@ class PinBallEnv(gym.core.Env):
         #add target
         target_rad = self.environment.target_rad * self.screen_height
         target = rendering.make_circle(target_rad)
-        target.set_color(0,0,1)
+        target.set_color(0, 0.35294118, 1)
         self.targettrans = rendering.Transform()
         target.add_attr(self.targettrans)
         self.targettrans.set_translation(
@@ -209,7 +206,7 @@ class PinBallEnv(gym.core.Env):
         #add ball
         ball_rad = self.environment.ball.radius * self.screen_height
         ball = rendering.make_circle(ball_rad)
-        ball.set_color(1,0,0)
+        ball.set_color(1, 0.29411765, 0)
         self.balltrans = rendering.Transform()
         ball.add_attr(self.balltrans)
         self.viewer.add_geom(ball)
@@ -284,16 +281,21 @@ class PinBallEnv(gym.core.Env):
 
 class PinballSubgoalEnv(PinBallEnv):
     def __init__(self, noise=.1, episodeCap=10000,
-                 configuration=2, infinite=False, subg_confs=[]):
+                 configuration=2, infinite=False):
         super().__init__(noise, episodeCap, configuration, infinite)
-        self.subg_confs = subg_confs # [{pos_x: , pos_y: , rad: }]
+        self.subg_confs = [] # [{pos_x: , pos_y: , rad: }]
+
+    def reset(self, subgoals):
+        
+        self.subg_confs = subgoals
+        super().reset()
 
     def init_render(self):
         super().init_render()
         for subg_conf in self.subg_confs:
             subg_rad = subg_conf["rad"] * self.screen_height
             subg = rendering.make_circle(subg_rad)
-            subg.set_color(0, 1, 0)
+            subg.set_color(0.01176471, 0.68627451, 0.47843137)
             subgtrans = rendering.Transform()
             subg.add_attr(subgtrans)
             subgtrans.set_translation(
