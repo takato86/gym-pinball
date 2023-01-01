@@ -285,7 +285,7 @@ class PinballSubgoalEnv(PinBallEnv):
         super().__init__(noise, episodeCap, configuration, infinite)
         self.subg_confs = [] # [{pos_x: , pos_y: , rad: }]
 
-    def reset(self, subgoals):
+    def reset(self, subgoals=[]):
         
         self.subg_confs = subgoals
         super().reset()
