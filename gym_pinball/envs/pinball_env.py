@@ -288,7 +288,7 @@ class PinballSubgoalEnv(PinBallEnv):
     def reset(self, subgoals=[]):
         
         self.subg_confs = subgoals
-        super().reset()
+        return super().reset()
 
     def init_render(self):
         super().init_render()
