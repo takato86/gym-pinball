@@ -196,7 +196,7 @@ class PinBallEnv(gym.core.Env):
         #add target
         target_rad = self.environment.target_rad * self.screen_height
         target = rendering.make_circle(target_rad)
-        target.set_color(0, 0.35294118, 1)
+        target.set_color(1, 0.29411765, 0)
         self.targettrans = rendering.Transform()
         target.add_attr(self.targettrans)
         self.targettrans.set_translation(
@@ -206,7 +206,7 @@ class PinBallEnv(gym.core.Env):
         #add ball
         ball_rad = self.environment.ball.radius * self.screen_height
         ball = rendering.make_circle(ball_rad)
-        ball.set_color(1, 0.29411765, 0)
+        ball.set_color(0, 0.35294118, 1)
         self.balltrans = rendering.Transform()
         ball.add_attr(self.balltrans)
         self.viewer.add_geom(ball)
